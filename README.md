@@ -1,361 +1,152 @@
+<div align="center">
 
 ```
      ╔════════════════════════════════════════════════════════════════════╗
      ║                                                                    ║
-     ║      █████╗       ███╗   ███╗  ██████╗ ██╗   ██╗ ███████╗██████╗   ║
-     ║     ██╔══██╗      ████╗ ████║ ██╔═══██╗██║   ██║ ██╔════╝██╔══██╗  ║
-     ║     ███████║█████╗██╔████╔██║ ██║   ██║██║   ██║ █████╗  ██████╔╝  ║
-     ║     ██╔══██║╚════╝██║╚██╔╝██║ ██║   ██║╚██╗ ██╔╝ ██╔══╝  ██╔══██╗  ║
-     ║     ██║  ██║      ██║ ╚═╝ ██║ ╚██████╔╝ ╚████╔╝  ███████╗██║  ██║  ║
-     ║     ╚═╝  ╚═╝      ╚═╝     ╚═╝  ╚═════╝   ╚═══╝   ╚══════╝╚═╝  ╚═╝  ║
+     ║                     A - M O V E R                                  ║
      ║                                                                    ║
      ║                     A S S E M B L Y   L I N E                      ║
      ║                                                                    ║
-     ╚═══════════════════════════════════════════════════════════════════ ╝
+     ╚════════════════════════════════════════════════════════════════════╝
 ```
 
-### Mobile Management App — AJP Motorcycles
-
-*A 360° view of the factory, in the manager's pocket.*
+### Assembly Line App — AJP Motorcycles
+*Guided, step-by-step assembly for the shop floor — part by part, checklist by checklist.*
 
 [![Android](https://img.shields.io/badge/Android-Kotlin-3DDC84?style=for-the-badge&logo=android&logoColor=white)](#)
 [![Jetpack Compose](https://img.shields.io/badge/Jetpack_Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)](#)
 [![MVVM](https://img.shields.io/badge/MVVM-Architecture-FF9800?style=for-the-badge)](#)
 [![JWT](https://img.shields.io/badge/JWT-Auth-000000?style=for-the-badge&logo=jsonwebtokens)](#)
 
----
-
 </div>
+
+---
 
 ## 📱 What it is
 
-**A-MoVeR Factory Management** is a native Android app for **managers, supervisors and quality leads** at AJP Motorcycles. It's the mobile companion to the web platform — bringing all production, service, warranty and team information to the phone, enabling real-time decisions without being tied to a computer.
+**A-MoVeR Assembly Line** is a native Android app for **operators and mechanics on the assembly line**
+at AJP Motorcycles (A-MoVeR project). It guides each motorcycle through the production flow —
+identification, serialized parts, assembly checklist, quality control and packaging — and records
+every step in the factory backend through the A-MoVeR REST API.
+
+It is the **shop-floor counterpart** of the
+[Factory Management app](https://github.com/tiagosol04/amover-factory-control-app): the management app
+gives supervisors the macro view; this app gives operators the micro control.
+
+---
+
+## 🧭 Production flow
 
 ```
-  ┌──────────────────────────────────────────────────────────────────┐
-  │                                                                  │
-  │   📊 DASHBOARD    →   Instant view of the whole factory          │
-  │   🏭 PRODUCTION   →   Orders, states, checklists, parts          │
-  │   🔧 SERVICES     →   Maintenance, breakdowns, warranties        │
-  │   📦 ORDERS       →   Customer order pipeline                    │
-  │   📈 TRACKING     →   Full history per unit / VIN                │
-  │   👥 TEAM         →   Availability and workload                  │
-  │   👤 PROFILE      →   Session, roles, preferences                │
-  │                                                                  │
-  └──────────────────────────────────────────────────────────────────┘
+  ┌───────────┐   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
+  │   LOGIN   │──▶│  DASHBOARD   │──▶│  IDENTIFY    │──▶│ REGISTER VIN │
+  │  (JWT)    │   │ orders / my  │   │  MOTORCYCLE  │   │ (frame / VIN)│
+  └───────────┘   │  motorcycles │   │ QR / VIN     │   └──────┬───────┘
+                  └──────────────┘   └──────────────┘          │
+                                                               ▼
+  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
+  │  PACKAGING   │◀──│ FINAL QUALITY│◀──│ POST-ASSEMBLY│◀──│  ASSEMBLY    │
+  │ & shipping   │   │   CONTROL    │   │  CHECKLIST   │   │ serialized   │
+  │  confirmation│   │ approve/fail │   │              │   │ parts (SN)   │
+  └──────────────┘   └──────────────┘   └──────────────┘   └──────────────┘
 ```
+
+Each stage is validated before the operator can move to the next one, so production order is enforced
+by the app and by the API.
 
 ---
 
 ## ⚡ Features
 
-### 🎯 Operational Dashboard
+| Screen | What the operator does |
+|---|---|
+| **Login** | Signs in with the same credentials as the web platform (ASP.NET Identity + JWT). |
+| **Dashboard** | Sees production orders and the motorcycles assigned to them. |
+| **Identify motorcycle** | Reads the chassis QR code / VIN (hardware scanner input or manual entry) and finds the unit. |
+| **Register VIN** | Associates the frame / VIN with the unit of a production order. |
+| **Assembly** | Registers **serialized parts** (serial numbers) required by the model's parts template, with input validation. |
+| **Post-assembly** | Completes the assembly checklist for the order. |
+| **Final quality control** | Runs the control checklist — **approve**, **fail** or **fix** a defect. |
+| **Packaging** | Confirms packaging and marks the unit as packed for shipping. |
+| **Orders / order detail** | Lists orders, starts an order and follows its progress and summary. |
 
-The dashboard doesn't show generic numbers — it shows **what needs attention right now**:
-
-| Indicator | What it means |
-|-----------|----------------|
-| **Blocked orders** | Production stopped — needs an immediate decision |
-| **No unit registered** | Units in production without traceability |
-| **VIN pending** | Frame not closed out — a risk for shipping |
-| **Control pending** | Almost ready, missing final validation |
-| **Open services** | Maintenance and warranties still unresolved |
-| **Team unavailable** | Insufficient shift coverage |
-
-The dashboard computes **immediate actions** and sorts them by priority. Factory zones (Assembly, Packaging, Control, Exceptions) show live workload.
-
-### 🏭 Production
-
-- Order list with filters (state, model, priority)
-- Full **Operational Sheet** per order:
-  - Traceability gates (Unit ✓ → VIN ✓ → Quality ✓)
-  - Checklist status (assembly, packaging, control)
-  - Context (customer, model, destination)
-  - **Start** and **Finish** an order via the API with full validation
-- Risk summary and suggested next action
-
-### 🔧 Services, Maintenance & Warranties
-
-A complete after-sales module:
-
-```
-                    ┌──────────────────┐
-                    │  SERVICES LIST   │
-                    │  KPIs + Filters  │
-                    │  + VIN search    │
-                    └────────┬─────────┘
-                             │
-                    ┌────────▼─────────┐
-                    │ SERVICE DETAIL   │
-                    │ ┌──────────────┐ │
-                    │ │ Unit info    │ │
-                    │ │ Type/State   │ │
-                    │ │ Changed parts│ │
-                    │ │ Notes        │ │
-                    │ └──────────────┘ │
-                    │ ┌──────────────┐ │
-                    │ │ Common       │ │
-                    │ │ issues for   │ │
-                    │ │ the model    │ │
-                    │ └──────────────┘ │
-                    │ ┌──────────────┐ │
-                    │ │  Actions:    │ │
-                    │ │ Start        │ │
-                    │ │ Complete     │ │
-                    │ └──────────────┘ │
-                    └──────────────────┘
-```
-
-**8 service types**: Maintenance, Breakdown, Warranty, Inspection, Diagnosis, Prep/Delivery, Technical Campaign, Other
-
-**Per-model analysis**: common issues grouped together + total warranties — surfacing patterns and enabling engineering decisions.
-
-### 📦 Orders
-
-A view of the commercial pipeline:
-- KPIs: Pending / In production / Completed
-- Customer, model, quantity, delivery date
-- Accessible via a top-bar shortcut (for managers/admins)
-
-### 📈 Tracking (History)
-
-- Search by order, VIN or destination
-- Filters: With VIN, Completed, With services
-- Technical summary per unit: model, VIN, country, services, checklist status
-
-### 🔐 Role System
-
-The app adapts to the user's profile:
-
-| Profile | Dashboard | Production | Services | Orders | Team | Tracking |
-|--------|:---------:|:----------:|:--------:|:------:|:----:|:--------:|
-| **Administration** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Supervisor** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Quality** | ✅ | ✅ | ✅ | — | ✅ | ✅ |
-| **After-sales** | — | ✅ | ✅ | — | ✅ | ✅ |
-| **Operator** | — | ✅ | ✅ | — | ✅ | — |
-
-The bottom bar shows only the modules the profile can access. Top-bar shortcuts for orders, incidents and team appear only for those allowed to see them.
+Shop-floor details:
+- **Scanner-friendly input** — `ScannerInputHelper` cleans characters that HID barcode/QR readers inject
+  (`\r`, `\n`, `\t`) and validates serial numbers and VINs before calling the API.
+- **Haptic feedback** — short vibrations confirm success or signal errors (`HapticHelper`).
+- **Readable errors** — API errors are mapped to clear messages in European Portuguese for operators.
+- **Persistent session** — JWT stored with DataStore (`SessionManager`).
+- **Step indicator** — a stepper shows where the unit is in the flow.
 
 ---
 
 ## 🏗 Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      UI LAYER                               │
-│   Jetpack Compose · Material 3 · Role-based navigation      │
-│                                                              │
-│   ┌───────────┐ ┌──────────┐ ┌──────────┐ ┌────────────┐   │
-│   │ Dashboard │ │Production│ │ Services │ │   Orders   │   │
-│   └───────────┘ └──────────┘ └──────────┘ └────────────┘   │
-│   ┌───────────┐ ┌──────────┐ ┌──────────┐                  │
-│   │  Tracking │ │   Team   │ │ Profile  │                  │
-│   └───────────┘ └──────────┘ └──────────┘                  │
-├─────────────────────────────────────────────────────────────┤
-│                   VIEWMODEL LAYER                           │
-│   DashboardRealVM · OrdensRealVM · OrdemDetalheRealVM        │
-│   ServicosVM · ServicoDetalheVM · EncomendasVM               │
-│   AlertasVM · HistoricoVM · EquipaVM · PerfilRealVM          │
-├─────────────────────────────────────────────────────────────┤
-│                   REPOSITORY LAYER                          │
-│   FabricaRepository (interface) → FabricaRepositoryImpl      │
-│   AuthRepository (interface) → AuthRepositoryImpl            │
-├─────────────────────────────────────────────────────────────┤
-│                    NETWORK LAYER                            │
-│   Retrofit 2 · OkHttp · JWT Interceptor · DataStore         │
-│   ApiService (65+ mapped endpoints)                          │
-├─────────────────────────────────────────────────────────────┤
-│                     BACKEND                                 │
-│   A-MoVeR API (ASP.NET Core) · SQL Server · Identity + JWT  │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│ UI          Jetpack Compose · Material · Navigation Compose  │
+│             10 routes (login → … → packaging)                │
+├──────────────────────────────────────────────────────────────┤
+│ ViewModel   AuthViewModel · OrdersViewModel · ProductionVM   │
+├──────────────────────────────────────────────────────────────┤
+│ Repository  AuthRepository · FactoryRepository               │
+├──────────────────────────────────────────────────────────────┤
+│ Network     Retrofit 2 · Gson · OkHttp logging · JWT header  │
+├──────────────────────────────────────────────────────────────┤
+│ Backend     A-MoVeR LCM API (ASP.NET Core · SQL Server)      │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-### Principles
+### API endpoints used (23)
 
-- **MVVM** with a full UI ↔ Logic ↔ Data separation
-- **StateFlow** for reactive state — the UI recomposes automatically
-- **Repository Pattern** — the UI never touches the API directly
-- **Role-Based Access** — navigation and features adapt to the JWT profile
-- **Offline-Resilient** — the token persists in DataStore, the session survives restarts
+| Area | Endpoints |
+|---|---|
+| Auth | `POST api/Auth/login` |
+| Production orders | list, detail, motorcycles of an order, add motorcycle, status, summary, **start**, **finish**, **mark as packed** |
+| Motorcycles | detail, **find by VIN**, status, identification (VIN), serialized parts (list / register) |
+| Models | serialized parts template |
+| Checklists | list per order; update **assembly**, **packaging** and **control** items |
+| Customer orders / users | list customer orders; motorcycles assigned to a user |
 
----
-
-## 📁 Project Structure
-
-```
-app/src/main/java/com/example/aplicacaodecontrolofabrica/
-│
-├── auth/
-│   ├── AuthDataStore.kt              ← JWT persistence
-│   ├── AuthHeaderInterceptor.kt      ← Injects the token into requests
-│   ├── AuthFailureInterceptor.kt     ← Handles 401/403
-│   └── UserSession.kt                ← Session data
-│
-├── data/
-│   ├── dto/
-│   │   ├── AuthDtos.kt              ← Login/Me
-│   │   ├── OrdemDtos.kt             ← Orders + Summary
-│   │   ├── ServicoDtos.kt          ← 15+ service DTOs ★
-│   │   ├── EncomendasAlertasDto.kt  ← Orders
-│   │   ├── ChecklistDtos.kt        ← Checklists
-│   │   ├── MotaPecasDtos.kt        ← Units + Serialized parts
-│   │   ├── UtilizadorDtos.kt       ← Users + Assignments
-│   │   ├── ModelosDtos.kt          ← Vehicle models
-│   │   ├── ClientesDtos.kt         ← Customers
-│   │   └── ExtraDtos.kt            ← Generic requests
-│   ├── model/                       ← UI domain models
-│   │   ├── Servico.kt              ← 8 types, 3 states, coverage
-│   │   ├── RoleAccessUi.kt         ← 6 operational profiles ★
-│   │   ├── Alerta.kt               ← Incidents with severity
-│   │   └── ...
-│   ├── mapper/
-│   │   ├── DtoHelpers.kt           ← Safe DTO→UI conversions
-│   │   └── DtoMappers.kt           ← Complex mappings
-│   └── repository/
-│       ├── FabricaRepository.kt     ← Interface (40+ methods)
-│       ├── FabricaRepositoryImpl.kt ← Implementation
-│       ├── AuthRepository.kt        ← Auth interface
-│       ├── AuthRepositoryImpl.kt    ← Auth implementation
-│       └── ServiceLocator.kt        ← Manual DI
-│
-├── features/
-│   ├── cockpit/
-│   │   ├── Dashboard.kt            ← 515 lines of UI ★
-│   │   └── DashboardRealViewModel.kt ← Zones, KPIs, actions
-│   ├── operacao/
-│   │   ├── OperacaoScreen.kt       ← Order list
-│   │   ├── FichaOperacionalScreen.kt ← Detail + start/finish ★
-│   │   ├── OrdensRealViewModel.kt   ← List with filters
-│   │   └── OrdemDetalheRealViewModel.kt ← Start/Finish/VIN ★
-│   ├── servicos/                    ★ NEW
-│   │   ├── ServicosScreen.kt        ← List + KPIs + filters
-│   │   ├── ServicosViewModel.kt     ← Search + filters
-│   │   ├── ServicoDetalheScreen.kt  ← Detail + model issues
-│   │   └── ServicoDetalheViewModel.kt ← Loads service + analysis
-│   ├── encomendas/                  ★ NEW
-│   │   ├── EncomendasScreen.kt      ← Order pipeline
-│   │   └── EncomendasViewModel.kt   ← Resolves customers/models
-│   ├── alertas/
-│   ├── historico/
-│   ├── equipa/
-│   ├── perfil/
-│   └── login/
-│
-├── network/
-│   ├── ApiService.kt               ← 65+ endpoints ★
-│   ├── ApiModule.kt                ← Retrofit configuration
-│   ├── ApiConfig.kt                ← Base URL
-│   └── UiErrors.kt                 ← Error handling
-│
-├── ui/
-│   ├── components/                  ← 8 reusable components
-│   └── theme/                       ← Customized Material 3
-│
-├── di/
-│   └── ViewModelFactory.kt         ← 11 registered ViewModels
-│
-├── AppNavigation.kt                ← 10 routes + role-based nav ★
-└── MainActivity.kt
-```
-
----
-
-## 🔌 API Coverage
-
-The app consumes **65+ endpoints** from the A-MoVeR API:
-
-| Module | Endpoints | Description |
-|--------|:---------:|-----------|
-| **Auth** | 2 | JWT login + profile |
-| **Orders** | 9 | CRUD + start + finish + summary + units |
-| **Units** | 10 | CRUD + VIN + serialized parts + summary + state |
-| **Checklists** | 4 | Per order, individual toggle by type |
-| **Services** | 14 | CRUD + states + changed parts + history by unit/VIN/model + common issues + warranties |
-| **Orders (customer)** | 4 | CRUD + filters |
-| **Users** | 5 | CRUD + assigned units + status |
-| **Models** | 2 | List + detail |
-| **Customers** | 2 | List + detail |
-| **Parts** | 1 | Catalog |
+Backend: [amover-lcm-backend-api](https://github.com/tiagosol04/amover-lcm-backend-api).
 
 ---
 
 ## 🚀 Setup
 
-### Prerequisites
+**Requirements:** Android Studio (2024.x or newer), Kotlin, and the A-MoVeR API running locally (port `5137`).
 
-- Android Studio Hedgehog+ (2024.x)
-- Kotlin 1.9+ / Compose BOM 2024.09
-- A-MoVeR API running (port 5137)
+The API base URL is defined per build type in `app/build.gradle.kts` (`BuildConfig.API_BASE_URL`):
 
-### Configuration
+| Build | URL |
+|---|---|
+| debug | `http://10.0.2.2:5137/` (Android emulator → host machine) |
+| release | must be configured before publishing |
 
-1. **Clone the repository**
-2. **Check the API URL** in `build.gradle.kts`:
-   ```kotlin
-   buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:5137/\"")
-   ```
-3. **Build & Run**
-4. **Log in** with the web platform's credentials (same Identity system)
+For a physical device on the same network, replace the debug URL with your computer's IP.
 
 ---
 
-## 🧩 Relationship with the Ecosystem
+## 📁 Repository layout
 
 ```
-  ┌─────────────────────────┐
-  │     WEB APP (Desktop)   │  ← Full management: orders,
-  │     ASP.NET Core MVC    │     models, parts, documents,
-  │     + Razor Views       │     purchasing, received goods
-  └───────────┬─────────────┘
-              │
-  ┌───────────▼─────────────┐
-  │      A-MoVeR API        │  ← Central data layer
-  │      ASP.NET Core       │     JWT Auth · SQL Server
-  │      Web API            │     65+ REST endpoints
-  └───────────┬─────────────┘
-              │
-    ┌─────────┴──────────┐
-    │                    │
-    ▼                    ▼
-  ┌────────────┐   ┌─────────────────┐
-  │ MANAGEMENT │   │ ASSEMBLY LINE   │
-  │    APP     │   │      APP         │
-  │ (this app) │   │                 │
-  │            │   │ Operators       │
-  │ Managers   │   │ Shop floor      │
-  │ Supervision│   │ Tablet/Scanner  │
-  │ Quality    │   │                 │
-  └────────────┘   └─────────────────┘
+app/                         ← current version of the app
+LinhaMontagemAMOVER-main/    ← earlier snapshot of the same app (kept for reference)
 ```
 
-The **Management App** and the **Assembly Line App** are complementary:
-- The management app gives the **macro view** — dashboard, metrics, decisions
-- The line app gives the **micro control** — part by part, checklist by checklist
-- Both read and write the same data via the API
-- A change on the line shows up in the manager's dashboard in real time
-
 ---
 
-## 🔮 Roadmap
+## 🧩 A-MoVeR ecosystem
 
-- [ ] Push notifications for critical alerts (blocked orders, warranties)
-- [ ] Production charts (units/week, average time per order)
-- [ ] Offline mode with automatic sync
-- [ ] PDF report export
-- [ ] PHC integration (invoicing) to avoid duplicating data
-- [ ] QR code scanning for quick access to an order/unit
-- [ ] Android widget for KPIs on the home screen
-
----
+| Repository | Role |
+|---|---|
+| [amover-lcm-backend-api](https://github.com/tiagosol04/amover-lcm-backend-api) | ASP.NET Core REST API + SQL Server — the central data layer |
+| [amover-factory-control-app](https://github.com/tiagosol04/amover-factory-control-app) | Android app for managers, supervisors and quality |
+| **amover-assembly-line-app** | Android app for assembly-line operators (this repository) |
+| [mobileuserapi-microservices-backend](https://github.com/tiagosol04/mobileuserapi-microservices-backend) | .NET 8 gRPC microservices prototype for the rider app (My Fulgora) |
 
 <div align="center">
 
-```
-  The factory in the palm of your hand.
-
-  AJP Motorcycles × Project A-MoVeR
-  Penafiel, Portugal · 2025
-```
+*Developed within the A-MoVeR project (UTAD × AJP Motorcycles), Vila Real / Penafiel, Portugal.*
 
 </div>
